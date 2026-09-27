@@ -1,0 +1,93 @@
+name: forgejo
+
+networks:
+  proxy-nw:
+    name: proxy-nw
+    external: true
+
+services:
+  server:
+    image: codeberg.org/forgejo/forgejo:16-rootless
+    container_name: forgejo
+    user: 1000:1000
+    userns_mode: keep-id    # map host user to container user for rootless Podman socket access
+    security_opt:
+      - label=disable
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+
+      - FORGEJO__database__DB_TYPE=postgres
+      - FORGEJO__database__HOST=postgres-forgejo:5432
+      - FORGEJO__database__NAME=forgejo
+      - FORGEJO__database__USER=forgejo
+      - FORGEJO__database__PASSWD=forgejo
+
+      - FORGEJO__actions__ENABLED=true
+
+      - FORGEJO__server__DOMAIN=localhost
+      - FORGEJO__server__ROOT_URL=http://localhost:3000/
+      - FORGEJO__server__LOCAL_ROOT_URL=http://server:3000/
+      - FORGEJO__server__SSH_DOMAIN=localhost
+      - FORGEJO__server__SSH_PORT=222
+
+    restart: always
+    networks:
+      - proxy-nw
+    volumes:
+      - ./forgejo:/var/lib/gitea:z
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:2222"
+    depends_on:
+      - postgres-forgejo
+
+  postgres-forgejo:
+    container_name: postgres-forgejo
+    image: postgres:18.6-trixie
+    restart: always
+    volumes:
+      - ./postgres:/var/lib/postgresql/18/data:z
+    environment:
+      POSTGRES_DB: forgejo
+      POSTGRES_USER: forgejo
+      POSTGRES_PASSWORD: forgejo
+      PGDATA: /var/lib/postgresql/18/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forgejo -d forgejo"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - proxy-nw
+
+  forgejo-runner:
+    build:
+      context: .
+      dockerfile: runner.Dockerfile
+    image: forgejo-runner:custom
+    container_name: forgejo-runner
+    hostname: forgejo-runner
+    restart: unless-stopped
+    depends_on:
+      - server
+    networks:
+      - proxy-nw
+    user: "1000:1000"
+    userns_mode: keep-id
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      CONTAINER_HOST: unix:///var/run/docker.sock
+    security_opt:
+      - label=disable
+    volumes:
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock:Z
+      - ./data/forgejo-runner:/data:Z
+    working_dir: /data
+    command:
+      - forgejo-runner
+      - daemon
+      - --config
+      - /data/runner-config.yml

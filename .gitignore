@@ -1,0 +1,10 @@
+**/data/*
+# !/data/forgejo-runner/
+# **/data/forgejo-runner/*
+# !/data/forgejo-runner/runner-config.yml
+# data/forgejo-runner/runner-config.yml
+
+**/postgres/*
+**/forgejo/*
+
+.env
