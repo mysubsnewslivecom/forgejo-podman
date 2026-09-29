@@ -10,6 +10,7 @@ RUN apk add --no-cache \
     curl \
     gcompat \
     podman \
+    podman-compose \
     docker-cli \
     python3 \
     py3-pip \
@@ -19,13 +20,9 @@ RUN apk add --no-cache \
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | \
-    env UV_INSTALL_DIR=/usr/local/bin sh
-
-RUN uv --version
-
-# Install Python 3.14
-RUN uv python install 3.14
-
-RUN uv python list
+    env UV_INSTALL_DIR=/usr/local/bin sh && \
+    uv --version && \ 
+    uv python install 3.14 && \
+    uv python list
 
 USER 1000:1000
