@@ -24,13 +24,17 @@ services:
       - FORGEJO__database__PASSWD=forgejo
 
       - FORGEJO__actions__ENABLED=true
+      - FORGEJO__packages__ENABLED=true
 
-      - FORGEJO__server__DOMAIN=localhost
-      - FORGEJO__server__ROOT_URL=http://localhost:3000/
+
+      - FORGEJO__server__DOMAIN=dev.fj.com
+      - FORGEJO__server__ROOT_URL=https://dev.fj.com/
       - FORGEJO__server__LOCAL_ROOT_URL=http://server:3000/
-      - FORGEJO__server__SSH_DOMAIN=localhost
+      - FORGEJO__server__SSH_DOMAIN=dev.fj.com
       - FORGEJO__server__SSH_PORT=222
-
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+      - "dev.fj.com:host-gateway"
     restart: always
     networks:
       - proxy-nw
@@ -71,6 +75,9 @@ services:
     container_name: forgejo-runner
     hostname: forgejo-runner
     restart: unless-stopped
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+      - "dev.fj.com:host-gateway"
     depends_on:
       - server
     networks:
