@@ -16,7 +16,10 @@ RUN apk add --no-cache \
     py3-pip \
     py3-virtualenv \
     python3-dev \
-    build-base
+    build-base && \
+    rm -f /etc/containers/seccomp.json
+
+COPY --chown=1000:1000 src/ /usr/local/bin/
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | \
