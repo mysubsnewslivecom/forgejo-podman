@@ -35,7 +35,7 @@ graph TD
     subgraph Host ["Host System (User UID 1000)"]
         Sock["Rootless Podman Socket<br/>/run/user/1000/podman/podman.sock"]
         StartScript["./start Script"]
-        PyScript["template_runner_config.py"]
+        PyScript["scripts/template_runner_config.py"]
     end
 
     subgraph Network ["Podman Network (proxy-nw)"]
@@ -146,10 +146,10 @@ podman compose -f forgejo.compose.yml up -d server postgres-forgejo
 
 ### 5. Template Runner Configuration
 
-Use the provided Python script [template_runner_config.py](file:///home/kishen/Documents/code/forgejo/template_runner_config.py) to generate the runner configuration:
+Use the provided Python script [template_runner_config.py](file:///home/kishen/Documents/code/forgejo/scripts/template_runner_config.py) to generate the runner configuration:
 
 ```bash
-./template_runner_config.py --token <PASTE_YOUR_REGISTRATION_TOKEN_HERE>
+python3 scripts/template_runner_config.py --token <PASTE_YOUR_REGISTRATION_TOKEN_HERE>
 ```
 
 Alternatively, copy [.env.example](file:///home/kishen/Documents/code/forgejo/.env.example) to `.env`:
@@ -157,10 +157,10 @@ Alternatively, copy [.env.example](file:///home/kishen/Documents/code/forgejo/.e
 ```bash
 cp .env.example .env
 # Edit .env and paste your token under FORGEJO_RUNNER_TOKEN
-./template_runner_config.py
+python3 scripts/template_runner_config.py
 ```
 
-This renders [runner-config.template.yml](file:///home/kishen/Documents/code/forgejo/runner-config.template.yml) into `data/forgejo-runner/runner-config.yml` with:
+This renders [runner-config.template.yml](file:///home/kishen/Documents/code/forgejo/scripts/runner-config.template.yml) into `data/forgejo-runner/runner-config.yml` with:
 - An automatically generated UUID (or reuses your existing UUID).
 - Server connection pointing to `http://forgejo:3000/`.
 - Default labels `host:host`.
@@ -244,13 +244,13 @@ server:
 
 ## The Python Templating Script (`template_runner_config.py`)
 
-[template_runner_config.py](file:///home/kishen/Documents/code/forgejo/template_runner_config.py) streamlines creating and maintaining `data/forgejo-runner/runner-config.yml`.
+[template_runner_config.py](file:///home/kishen/Documents/code/forgejo/scripts/template_runner_config.py) streamlines creating and maintaining `data/forgejo-runner/runner-config.yml`.
 
 ### Features
 
 - **Zero-Friction Registration**: Generates a valid UUIDv4 automatically on initial setup.
 - **Identity Preservation**: Reuses the existing runner UUID across configuration updates so the runner does not get duplicated in the Forgejo UI.
-- **Template-Based**: Substitutes variables into [runner-config.template.yml](file:///home/kishen/Documents/code/forgejo/runner-config.template.yml), preserving all inline comments and formatting.
+- **Template-Based**: Substitutes variables into [runner-config.template.yml](file:///home/kishen/Documents/code/forgejo/scripts/runner-config.template.yml), preserving all inline comments and formatting.
 - **Flexible Input**: Configurable through CLI arguments, `.env` file, or shell environment variables.
 - **YAML Validation**: Verifies generated output syntax with PyYAML prior to saving.
 - **Dry-Run Mode**: Inspect output without writing to disk.
@@ -259,24 +259,24 @@ server:
 
 #### 1. Basic Generation with Token
 ```bash
-./template_runner_config.py --token "your-forgejo-runner-token"
+python3 scripts/template_runner_config.py --token "your-forgejo-runner-token"
 ```
 
 #### 2. Dry Run Preview (prints to stdout)
 ```bash
-./template_runner_config.py --token "your-token" --dry-run
+python3 scripts/template_runner_config.py --token "your-token" --dry-run
 ```
 
 #### 3. Using `.env` File
 ```bash
 cp .env.example .env
 # Edit .env: FORGEJO_RUNNER_TOKEN=your-token
-./template_runner_config.py
+python3 scripts/template_runner_config.py
 ```
 
 #### 4. Custom Labels and Concurrency
 ```bash
-./template_runner_config.py \
+python3 scripts/template_runner_config.py \
   --token "your-token" \
   --capacity 2 \
   --labels "host:host,docker:docker://docker.io/library/node:22-bookworm"
@@ -284,7 +284,7 @@ cp .env.example .env
 
 #### 5. Force a Brand New Runner Identity
 ```bash
-./template_runner_config.py --token "your-token" --new-uuid
+python3 scripts/template_runner_config.py --token "your-token" --new-uuid
 ```
 
 ### CLI Reference
@@ -304,7 +304,7 @@ cp .env.example .env
 | `--container-network` | - | `""` | Container network for workflow steps |
 | `--insecure` | - | `false` | Disable TLS certificate verification |
 | `--log-level` | - | `info` | Daemon log level (`trace`, `debug`, `info`, etc.) |
-| `--template` | - | `runner-config.template.yml` | Custom path to template file |
+| `--template` | - | `scripts/runner-config.template.yml` | Custom path to template file |
 | `-o`, `--output` | - | `data/forgejo-runner/runner-config.yml` | Destination file path |
 | `--env-file` | - | `.env` | Path to `.env` file |
 | `--dry-run` | - | `false` | Print to stdout without modifying files |
@@ -347,15 +347,18 @@ Push this commit to your repository and open the **Actions** tab in Forgejo to s
 ├── .gitignore                       # Git ignore rules (protects data & secrets)
 ├── forgejo.compose.yml              # Podman Compose service definitions
 ├── runner.Dockerfile                # Custom runner image with dev tools
-├── runner-config.template.yml       # Base template with placeholder variables
-├── template_runner_config.py        # Python script to generate runner-config.yml
 ├── start                            # Convenience script to build and launch stack
 ├── README.md                        # Documentation
 ├── data/
 │   └── forgejo-runner/
 │       └── runner-config.yml        # Active runner config (generated, gitignored)
 ├── forgejo/                         # Forgejo persistent state & repos (gitignored)
-└── postgres/                        # PostgreSQL 18 data directory (gitignored)
+├── postgres/                        # PostgreSQL 18 data directory (gitignored)
+├── scripts/
+│   ├── runner-config.template.yml   # Base template with placeholder variables
+│   └── template_runner_config.py    # Python script to generate runner-config.yml
+└── src/
+    └── publish_generic.py           # Helper script for publishing packages
 ```
 
 ---

@@ -6,6 +6,15 @@ IMAGE="forgejo-runner:custom"
 
 case "${1:-start}" in
   start)
+    echo "Ensuring Podman network 'proxy-nw' exists..."
+    podman network exists proxy-nw || podman network create proxy-nw
+
+    if [ ! -f "data/forgejo-runner/runner-config.yml" ]; then
+      echo "WARNING: 'data/forgejo-runner/runner-config.yml' not found."
+      echo "Forgejo runner will fail until configured."
+      echo "Generate it using: python3 scripts/template_runner_config.py --token <TOKEN>"
+    fi
+
     echo "Building Forgejo runner image..."
     podman build \
       -t "$IMAGE" \

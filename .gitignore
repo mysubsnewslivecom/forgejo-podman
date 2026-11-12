@@ -8,3 +8,4 @@
 **/forgejo/*
 
 .env
+**/__pycache__

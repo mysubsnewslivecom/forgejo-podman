@@ -6,8 +6,7 @@ runner:
   file: .runner
   capacity: ${CAPACITY}
   labels:
-  labels:
-    - "host:host"
+${LABELS}
 
   envs:
     A_TEST_ENV_NAME_1: a_test_env_value_1

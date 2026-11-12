@@ -26,7 +26,7 @@ except ImportError:
     HAVE_YAML = False
 
 DEFAULT_TEMPLATE = Path(__file__).resolve().parent / "runner-config.template.yml"
-DEFAULT_OUTPUT = Path(__file__).resolve().parent / "data" / "forgejo-runner" / "runner-config.yml"
+DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "data" / "forgejo-runner" / "runner-config.yml"
 
 
 def parse_env_file(filepath: Path) -> dict[str, str]:
@@ -230,7 +230,10 @@ def main() -> int:
     args = parse_args()
 
     # 1. Load environment variables from .env if present
-    env_vars = parse_env_file(args.env_file)
+    env_file = args.env_file
+    if not env_file.is_file() and (DEFAULT_OUTPUT.parent.parent / ".env").is_file():
+        env_file = DEFAULT_OUTPUT.parent.parent / ".env"
+    env_vars = parse_env_file(env_file)
 
     # 2. Resolve token
     token = (
